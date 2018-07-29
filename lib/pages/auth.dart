@@ -7,39 +7,57 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
+  final GlobalKey<FormState> _loginKey = GlobalKey<FormState>();
+
+  final Map<String, dynamic> _loginData = {
+    'email': '',
+    'password': '',
+    'isTermsAccepted': false
+  };
+
   String _emailValue = '';
   String _passwordValue = '';
   bool _acceptTerms = false;
 
   @override
   Widget build(BuildContext context) {
+    final double deviceWidth = MediaQuery.of(context).size.width;
+    final double targetWith = deviceWidth > 768.0 ? 500.0 : deviceWidth * 0.95;
+
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(
         title: Text('Log In'),
       ),
       body: Container(
+        alignment: Alignment.center,
         padding: EdgeInsets.all(20.0),
         decoration: BoxDecoration(image: _buildBackgroundImage()),
         child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                _buildEmailForm(),
-                SizedBox(
-                  height: 10.00,
+            child: Container(
+              width: targetWith,
+              child: Form(
+                key: _loginKey,
+                child: Column(
+                  children: <Widget>[
+                    _buildEmailForm(),
+                    SizedBox(
+                      height: 10.00,
+                    ),
+                    _buildPasswordForm(),
+                    _buildAcceptSwitcher(),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    RaisedButton(
+                        color: Theme.of(context).accentColor,
+                        textColor: Colors.white,
+                        child: Text('LOGIN'),
+                        onPressed: _submitLogin),
+                  ],
                 ),
-                _buildPasswordForm(),
-                _buildAcceptSwitcher(),
-                SizedBox(
-                  height: 10.0,
-                ),
-                RaisedButton(
-                    color: Theme.of(context).accentColor,
-                    textColor: Colors.white,
-                    child: Text('LOGIN'),
-                    onPressed: _submitLogin),
-              ],
+              ),
             ),
           ),
         ),
@@ -57,7 +75,14 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   Widget _buildEmailForm() {
-    return TextField(
+    return TextFormField(
+      validator: (String value) {
+        if (value.isEmpty ||
+            !RegExp(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+                .hasMatch(value)) {
+          return 'This is not a valid email!!';
+        }
+      },
       decoration: InputDecoration(
         labelText: 'Email',
         filled: true,
@@ -65,16 +90,19 @@ class _AuthPageState extends State<AuthPage> {
         suffixIcon: Icon(Icons.email),
       ),
       keyboardType: TextInputType.emailAddress,
-      onChanged: (String value) {
-        setState(() {
-          _emailValue = value;
-        });
+      onSaved: (String value) {
+        _loginData['email'] = value;
       },
     );
   }
 
   Widget _buildPasswordForm() {
-    return TextField(
+    return TextFormField(
+      validator: (String value) {
+        if (value.isEmpty || value.length < 8) {
+          return 'Password is too short';
+        }
+      },
       obscureText: true,
       decoration: InputDecoration(
         filled: true,
@@ -83,27 +111,52 @@ class _AuthPageState extends State<AuthPage> {
         suffixIcon: Icon(Icons.lock),
       ),
       keyboardType: TextInputType.text,
-      onChanged: (String value) {
-        setState(() {
-          _passwordValue = value;
-        });
+      onSaved: (String value) {
+        _loginData['password'] = value;
       },
     );
   }
 
   Widget _buildAcceptSwitcher() {
     return SwitchListTile(
+      value: _loginData['isTermsAccepted'],
       title: Text('Accept terms'),
-      value: _acceptTerms,
       onChanged: (bool value) {
         setState(() {
-          _acceptTerms = value;
+          _loginData['isTermsAccepted'] = value;
         });
       },
     );
   }
 
   void _submitLogin() {
-    Navigator.pushReplacementNamed(context, '/products');
+    if ( _loginKey.currentState.validate()) {
+      if (_loginData['isTermsAccepted']){
+        _loginKey.currentState.save();
+        Navigator.pushReplacementNamed(context, '/products');
+      } else
+        _showWarningDialog(context);
+      }
+    else return;
+  }
+
+  void _showWarningDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Accept terms, bitch!'),
+            content: Text(
+                'We can not let you to log in unless you accept the terms'),
+            actions: <Widget>[
+              FlatButton(
+                child: Text("Got it"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              )
+            ],
+          );
+        });
   }
 }
