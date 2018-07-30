@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:scoped_model/scoped_model.dart';
 
 import '../widgets/products/price_tag.dart';
 import '../widgets/ui_elements/title_default.dart';
 import '../widgets/ui_elements/location_tag.dart';
+import '../scoped_models/products.dart';
+import '../models/product.dart';
 
 class ProductPage extends StatelessWidget {
-  final String title;
-  final String image;
-  final double price;
-  final String description;
+  final int index;
 
-  ProductPage(this.title, this.image, this.price, this.description);
+  ProductPage(this.index);
 
   @override
   Widget build(BuildContext context) {
@@ -20,35 +20,40 @@ class ProductPage extends StatelessWidget {
         Navigator.pop(context, false);
         return Future.value(false);
       },
-      child: Scaffold(
-          appBar: AppBar(
-            title: Text(title),
-          ),
-          body: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Image.asset(image),
-                Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      TitleDefault(title),
-                      SizedBox(
-                        width: 20.00,
+      child: ScopedModelDescendant<ProductsModel>(
+        builder: (BuildContext context, Widget child, ProductsModel model) {
+          final Product product = model.products[index];
+          return Scaffold(
+              appBar: AppBar(
+                title: Text(product.title),
+              ),
+              body: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Image.asset(product.image),
+                    Container(
+                      padding: EdgeInsets.all(10.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          TitleDefault(product.title),
+                          SizedBox(
+                            width: 20.00,
+                          ),
+                          PriceTag(product.price.toString())
+                        ],
                       ),
-                      PriceTag(price.toString())
-                    ],
-                  ),
-                ),
-                _buildDescription(),
-                LocationTag(),
-                _buildDeleteButton(context)
-              ])),
+                    ),
+                    _buildDescription(product.description),
+                    LocationTag(),
+                    _buildDeleteButton(context)
+                  ]));
+        },
+      ),
     );
   }
 
-  Widget _buildDescription() {
+  Widget _buildDescription(String description) {
     return Center(
       child: Container(
         padding: EdgeInsets.all(20.00),
