@@ -12,7 +12,7 @@ class _AuthPageState extends State<AuthPage> {
   final Map<String, dynamic> _loginData = {
     'email': '',
     'password': '',
-    'isTermsAccepted': false
+    'isTermsAccepted': true
   };
 
   String _emailValue = '';
@@ -76,6 +76,7 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _buildEmailForm() {
     return TextFormField(
+      initialValue: 'myshCo@uke.net',
       validator: (String value) {
         if (value.isEmpty ||
             !RegExp(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
@@ -98,6 +99,7 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _buildPasswordForm() {
     return TextFormField(
+      initialValue: '123456789',
       validator: (String value) {
         if (value.isEmpty || value.length < 8) {
           return 'Password is too short';
@@ -130,14 +132,14 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   void _submitLogin() {
-    if ( _loginKey.currentState.validate()) {
-      if (_loginData['isTermsAccepted']){
+    if (_loginKey.currentState.validate()) {
+      if (_loginData['isTermsAccepted']) {
         _loginKey.currentState.save();
         Navigator.pushReplacementNamed(context, '/products');
       } else
         _showWarningDialog(context);
-      }
-    else return;
+    } else
+      return;
   }
 
   void _showWarningDialog(BuildContext context) {
