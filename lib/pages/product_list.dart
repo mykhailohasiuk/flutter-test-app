@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 
-
 import './product_edit.dart';
-import '../scoped_models/products.dart';
+import '../scoped_models/main.dart';
 
 class ProductListPage extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
-    return ScopedModelDescendant<ProductsModel>(
-      builder: (BuildContext context, Widget child, ProductsModel model) {
+    return ScopedModelDescendant<MainModel>(
+      builder: (BuildContext context, Widget child, MainModel model) {
         return ListView.builder(
           itemBuilder: (BuildContext context, int index) {
             return Dismissible(
@@ -36,16 +34,16 @@ class ProductListPage extends StatelessWidget {
                   model.deleteProduct();
                 }
               },
-              key: Key(index.toString() + model.products[index].title),
+              key: Key(index.toString() + model.allProducts[index].title),
               child: Column(
                 children: <Widget>[
                   ListTile(
                     leading: CircleAvatar(
                       radius: 35.0,
-                      backgroundImage: AssetImage(model.products[index].image),
+                      backgroundImage: AssetImage(model.allProducts[index].image),
                     ),
-                    title: Text(model.products[index].title),
-                    subtitle: Text('\$ ${model.products[index].price}'),
+                    title: Text(model.allProducts[index].title),
+                    subtitle: Text('\$ ${model.allProducts[index].price}'),
                     trailing: _buildEditButton(context, index, model),
                   ),
                   Divider()
@@ -53,23 +51,23 @@ class ProductListPage extends StatelessWidget {
               ),
             );
           },
-          itemCount: model.products.length,
+          itemCount: model.allProducts.length,
         );
       },
     );
   }
 
-  Widget _buildEditButton(BuildContext context, int index, ProductsModel model) {
-
-        return IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              model.selectProduct(index);
-              Navigator
-                  .of(context)
-                  .push(MaterialPageRoute(builder: (BuildContext context) {
-                return ProductEditPage();
-              }));
-            });
-      }
+  Widget _buildEditButton(
+      BuildContext context, int index, MainModel model) {
+    return IconButton(
+        icon: Icon(Icons.edit),
+        onPressed: () {
+          model.selectProduct(index);
+          Navigator
+              .of(context)
+              .push(MaterialPageRoute(builder: (BuildContext context) {
+            return ProductEditPage();
+          }));
+        });
+  }
 }

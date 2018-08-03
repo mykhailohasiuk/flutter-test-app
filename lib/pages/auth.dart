@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
+
+import '../scoped_models/main.dart';
 
 class AuthPage extends StatefulWidget {
   State<StatefulWidget> createState() {
@@ -14,10 +17,6 @@ class _AuthPageState extends State<AuthPage> {
     'password': '',
     'isTermsAccepted': true
   };
-
-  String _emailValue = '';
-  String _passwordValue = '';
-  bool _acceptTerms = false;
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +49,16 @@ class _AuthPageState extends State<AuthPage> {
                     SizedBox(
                       height: 10.0,
                     ),
-                    RaisedButton(
-                        color: Theme.of(context).accentColor,
-                        textColor: Colors.white,
-                        child: Text('LOGIN'),
-                        onPressed: _submitLogin),
+                    ScopedModelDescendant<MainModel>(
+                      builder: (BuildContext context, Widget child,
+                          MainModel model) {
+                        return RaisedButton(
+                            color: Theme.of(context).accentColor,
+                            textColor: Colors.white,
+                            child: Text('LOGIN'),
+                            onPressed:() => _submitLogin(model.login));
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -131,10 +135,11 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  void _submitLogin() {
+  void _submitLogin(Function login) {
     if (_loginKey.currentState.validate()) {
       if (_loginData['isTermsAccepted']) {
         _loginKey.currentState.save();
+        login(_loginData['email'], _loginData['password']);
         Navigator.pushReplacementNamed(context, '/products');
       } else
         _showWarningDialog(context);

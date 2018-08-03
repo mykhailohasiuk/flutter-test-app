@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
-
 class LocationTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return
-    Container(
+    return Container(
         padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.0),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4.0),
@@ -25,7 +23,6 @@ class LocationTag extends StatelessWidget {
               'Union Square, \n San Francisco',
             ),
           ],
-        )
-    );
+        ));
   }
 }

@@ -1,9 +1,7 @@
-
 import 'package:flutter/material.dart';
 
 class PriceTag extends StatelessWidget {
   final String price;
-
 
   PriceTag(this.price);
 
@@ -26,5 +24,3 @@ class PriceTag extends StatelessWidget {
     );
   }
 }
-
-
