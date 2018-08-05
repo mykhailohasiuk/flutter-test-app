@@ -16,8 +16,8 @@ class _ProductEditPageState extends State<ProductEditPage> {
   final Map<String, dynamic> _formData = {
     'title': '',
     'description': '',
-    'price': 0.0,
-    'image': 'assets/food.jpg'
+    'price': '',
+    'image': ''
   };
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final _titleFocusNode = FocusNode();
@@ -30,7 +30,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
         builder: (BuildContext context, Widget child, MainModel model) {
       final Widget pageContent =
           _buildEditPageContent(context, model.selectedProduct);
-      return model.selectedProductIndex == null
+      return model.selProductIndex == -1
           ? pageContent
           : Scaffold(
               appBar: AppBar(
@@ -76,13 +76,18 @@ class _ProductEditPageState extends State<ProductEditPage> {
   Widget _buildSubmitButton() {
     return ScopedModelDescendant<MainModel>(
       builder: (BuildContext context, Widget child, MainModel model) {
-        return RaisedButton(
-          child: Text('Save'),
-          color: Theme.of(context).accentColor,
-          textColor: Colors.white,
-          onPressed: () => _submitForm(model.addProduct, model.updateProduct,
-              model.selectProduct, model.selectedProductIndex),
-        );
+        return model.isLoading
+            ? Center(child: CircularProgressIndicator())
+            : RaisedButton(
+                child: Text('Save'),
+                color: Theme.of(context).accentColor,
+                textColor: Colors.white,
+                onPressed: () => _submitForm(
+                    model.addProduct,
+                    model.updateProduct,
+                    model.selectProduct,
+                    model.selProductIndex),
+              );
       },
     );
   }
@@ -157,20 +162,22 @@ class _ProductEditPageState extends State<ProductEditPage> {
 
   void _submitForm(
       Function addProduct, Function updateProduct, Function setSelectedProduct,
-      [int selectedProductIndex]) {
+      [int selProductIndex]) {
     if (_formKey.currentState.validate()) {
       _formKey.currentState.save();
 
-      if (selectedProductIndex == null) {
+      if (selProductIndex == -1) {
         addProduct(_formData['title'], _formData['description'],
-            _formData['image'], _formData['price']);
+            _formData['image'], _formData['price']).then((_)=> Navigator
+            .pushReplacementNamed(context, '/products')
+            .then((_) => setSelectedProduct(null)));
       } else {
         updateProduct(_formData['title'], _formData['description'],
-            _formData['image'], _formData['price']);
+            _formData['image'], _formData['price']).then((_)=> Navigator
+            .pushReplacementNamed(context, '/products')
+            .then((_) => setSelectedProduct(null)));
       }
-      Navigator
-          .pushReplacementNamed(context, '/products')
-          .then((_) => setSelectedProduct(null));
+
     } else
       return;
   }

@@ -17,7 +17,12 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Column(children: <Widget>[
-        Image.asset(product.image),
+        FadeInImage(
+          image: NetworkImage(product.image),
+          placeholder: AssetImage('assets/food.jpg'),
+          height: 300.0,
+          fit: BoxFit.cover,
+        ),
         _buildCardHeader(),
         LocationTag(),
         _buildBottomButtons(context)
@@ -42,38 +47,31 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildBottomButtons(BuildContext context) {
-    return ButtonBar(
-      alignment: MainAxisAlignment.center,
-      children: <Widget>[
+    return ScopedModelDescendant<MainModel>(
+        builder: (BuildContext context, Widget child, MainModel model) {
+      return ButtonBar(alignment: MainAxisAlignment.center, children: <Widget>[
         IconButton(
             color: Colors.blueAccent,
             icon: Icon(Icons.info_outline),
             iconSize: 40.00,
             onPressed: () => Navigator.pushNamed<bool>(
-                context, '/product/' + productIndex.toString())),
-        ScopedModelDescendant<MainModel>(
-          builder: (BuildContext context, Widget child, MainModel model) {
-            return Column(
-              children: <Widget>[
-                Center(
-                  child: Text(product.userEmail),
-                ),
-                IconButton(
-                  color: Colors.pinkAccent,
-                  icon: Icon(model.allProducts[productIndex].isFavorite
-                      ?Icons.favorite
-                      :Icons.favorite_border),
-                  iconSize: 40.00,
-                  onPressed: () {
-                    model.selectProduct(productIndex);
-                    model.toggleProductFavoriteStatus();
-                  },
-                ),
-              ],
-            );
-          },
-        )
-      ],
-    );
+                context, '/product/' + model.allProducts[productIndex].id)),
+        Column(
+          children: <Widget>[
+            IconButton(
+              color: Colors.pinkAccent,
+              icon: Icon(model.allProducts[productIndex].isFavorite
+                  ? Icons.favorite
+                  : Icons.favorite_border),
+              iconSize: 40.00,
+              onPressed: () {
+                model.selectProduct(model.allProducts[productIndex].id);
+                model.toggleProductFavoriteStatus();
+              },
+            )
+          ],
+        ),
+      ]);
+    });
   }
 }
