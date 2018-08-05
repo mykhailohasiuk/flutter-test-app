@@ -168,16 +168,53 @@ class _ProductEditPageState extends State<ProductEditPage> {
 
       if (selProductIndex == -1) {
         addProduct(_formData['title'], _formData['description'],
-            _formData['image'], _formData['price']).then((_)=> Navigator
-            .pushReplacementNamed(context, '/products')
-            .then((_) => setSelectedProduct(null)));
+            _formData['image'], _formData['price']).then((bool success) {
+          if (success) {
+            Navigator
+                .pushReplacementNamed(context, '/products')
+                .then((_) => setSelectedProduct(null));
+          } else {
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text("Something went wrong"),
+                    content: Text("please DO SOMETHING!!"),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: Text("Okey("),
+                        onPressed: () => Navigator.of(context).pop(),
+                      )
+                    ],
+                  );
+                });
+          }
+        });
       } else {
         updateProduct(_formData['title'], _formData['description'],
-            _formData['image'], _formData['price']).then((_)=> Navigator
-            .pushReplacementNamed(context, '/products')
-            .then((_) => setSelectedProduct(null)));
+            _formData['image'], _formData['price']).then((bool success) {
+          if (success) {
+            Navigator
+                .pushReplacementNamed(context, '/products')
+                .then((_) => setSelectedProduct(null));
+          } else {
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text("Something went wrong"),
+                    content: Text("please DO SOMETHING!!"),
+                    actions: <Widget>[
+                      FlatButton(
+                        child: Text("Okey("),
+                        onPressed: () => Navigator.of(context).pop(),
+                      )
+                    ],
+                  );
+                });
+          }
+        });
       }
-
     } else
       return;
   }
