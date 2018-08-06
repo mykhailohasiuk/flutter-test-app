@@ -4,6 +4,9 @@ import 'package:scoped_model/scoped_model.dart';
 import './product_edit.dart';
 import '../scoped_models/main.dart';
 
+
+
+//This is the page where we do generate a list with editable product-items
 class ProductListPage extends StatefulWidget {
 
   final MainModel model;
