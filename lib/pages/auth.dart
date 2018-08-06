@@ -3,6 +3,8 @@ import 'package:scoped_model/scoped_model.dart';
 
 import '../scoped_models/main.dart';
 
+enum AuthMode { SignUp, Login }
+
 class AuthPage extends StatefulWidget {
   State<StatefulWidget> createState() {
     return _AuthPageState();
@@ -18,6 +20,10 @@ class _AuthPageState extends State<AuthPage> {
     'isTermsAccepted': true
   };
 
+  final TextEditingController _passwordTextController = TextEditingController();
+
+  AuthMode _authMode = AuthMode.Login;
+
   @override
   Widget build(BuildContext context) {
     final double deviceWidth = MediaQuery.of(context).size.width;
@@ -26,7 +32,7 @@ class _AuthPageState extends State<AuthPage> {
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(
-        title: Text('Log In'),
+        title: Text('${_authMode == AuthMode.Login ? 'Log In' : 'SingUp'}'),
       ),
       body: Container(
         alignment: Alignment.center,
@@ -45,9 +51,30 @@ class _AuthPageState extends State<AuthPage> {
                       height: 10.00,
                     ),
                     _buildPasswordForm(),
+                    SizedBox(
+                      height: 10.00,
+                    ),
+                    _authMode == AuthMode.Login
+                        ? Container()
+                        : _buildPasswordConfirmForm(),
                     _buildAcceptSwitcher(),
                     SizedBox(
                       height: 10.0,
+                    ),
+                    FlatButton(
+                      child: Text('Switch to ${_authMode == AuthMode.Login
+                          ? 'Signup'
+                          : 'Login'}'),
+                      onPressed: () {
+                        setState(() {
+                          _authMode = _authMode == AuthMode.Login
+                              ? AuthMode.SignUp
+                              : AuthMode.Login;
+                        });
+                      },
+                    ),
+                    SizedBox(
+                      height: 10.00,
                     ),
                     ScopedModelDescendant<MainModel>(
                       builder: (BuildContext context, Widget child,
@@ -56,7 +83,8 @@ class _AuthPageState extends State<AuthPage> {
                             color: Theme.of(context).accentColor,
                             textColor: Colors.white,
                             child: Text('LOGIN'),
-                            onPressed:() => _submitLogin(model.login));
+                            onPressed: () =>
+                                _submitAuth(model.login, model.signup));
                       },
                     ),
                   ],
@@ -80,7 +108,6 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _buildEmailForm() {
     return TextFormField(
-      initialValue: 'myshCo@uke.net',
       validator: (String value) {
         if (value.isEmpty ||
             !RegExp(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
@@ -103,7 +130,6 @@ class _AuthPageState extends State<AuthPage> {
 
   Widget _buildPasswordForm() {
     return TextFormField(
-      initialValue: '123456789',
       validator: (String value) {
         if (value.isEmpty || value.length < 8) {
           return 'Password is too short';
@@ -114,6 +140,28 @@ class _AuthPageState extends State<AuthPage> {
         filled: true,
         fillColor: Colors.white.withOpacity(0.7),
         labelText: 'Password',
+        suffixIcon: Icon(Icons.lock),
+      ),
+      keyboardType: TextInputType.text,
+      onSaved: (String value) {
+        _loginData['password'] = value;
+      },
+      controller: _passwordTextController,
+    );
+  }
+
+  Widget _buildPasswordConfirmForm() {
+    return TextFormField(
+      validator: (String value) {
+        if (_passwordTextController.text != value) {
+          return 'Passwords do not match!';
+        }
+      },
+      obscureText: true,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.7),
+        labelText: 'Confirm Password',
         suffixIcon: Icon(Icons.lock),
       ),
       keyboardType: TextInputType.text,
@@ -135,12 +183,19 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  void _submitLogin(Function login) {
+  void _submitAuth(Function login, Function signup) async {
     if (_loginKey.currentState.validate()) {
       if (_loginData['isTermsAccepted']) {
         _loginKey.currentState.save();
-        login(_loginData['email'], _loginData['password']);
-        Navigator.pushReplacementNamed(context, '/products');
+        if (_authMode == AuthMode.Login) {
+          login(_loginData['email'], _loginData['password']);
+        } else {
+          final Map<String, dynamic> successInfo =
+              await signup(_loginData['email'], _loginData['password']);
+          if (successInfo['success']) {
+            Navigator.pushReplacementNamed(context, '/products');
+          } else {}
+        }
       } else
         _showWarningDialog(context);
     } else
