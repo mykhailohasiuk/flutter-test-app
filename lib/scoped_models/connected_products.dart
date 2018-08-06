@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import '../models/product.dart';
 import '../models/user.dart';
+import '../models/auth.dart';
 
 class ConnectedProductsModel extends Model {
   List<Product> _products = [];
@@ -224,23 +225,56 @@ class ProductsModel extends ConnectedProductsModel {
 }
 
 class UserModel extends ConnectedProductsModel {
-  void login(String email, String password) {
-    _authenticatedUser = User(id: '1234', email: email, password: password);
-  }
 
-  Future<Map<String, dynamic>> signup(String email, String password) async {
-    final Map<String, dynamic> authData = {
+  //AUTHENTICATION:
+
+  Future<Map<String, dynamic>> authenticate(String email, String password, [AuthMode mode = AuthMode.Login]) async {
+
+    _isLoading = true;
+    notifyListeners();
+    final Map<String, dynamic> loginData = {
       'email': email,
       'password': password,
       'returnSecureToken': true
     };
-    final http.Response response = await http.post(
-        'https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=AIzaSyAYL-pEjPTcaxOCZqBXTbGx82fqb4pot0Q',
-        body: json.encode(authData),
-        headers: {'Content-Type': 'application/json'});
 
-    return {'success': true, 'message': 'Authentication succeded'};
+
+    http.Response authResponse;
+
+    if (mode == AuthMode.Login){
+      authResponse = await http.post(
+          'https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyAYL-pEjPTcaxOCZqBXTbGx82fqb4pot0Q',
+          body: json.encode(loginData),
+          headers: {'Content-Type': 'application/json'});
+    } else {
+      authResponse = await http.post(
+          'https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=AIzaSyAYL-pEjPTcaxOCZqBXTbGx82fqb4pot0Q',
+          body: json.encode(loginData),
+          headers: {'Content-Type': 'application/json'});
+    }
+
+    final Map<String, dynamic> responseData = json.decode(authResponse.body);
+    bool hasError = true;
+
+    String message = 'Something went wrong';
+
+    if (responseData.containsKey('idToken')) {
+      hasError = false;
+      message = 'Authentication succeded';
+    } else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
+      message = 'This email already exists';
+    } else if (responseData['error']['message'] == 'EMAIL_NOT_FOUND') {
+      message = 'No such email';
+    } else if (responseData['error']['message'] == 'INVALID_PASSWORD') {
+      message = 'The password is incorrect. try again';
+    }
+    _isLoading = false;
+    notifyListeners();
+    return {'success': !hasError, 'message': message};
+
   }
+
+
 }
 
 class UtilityModel extends ConnectedProductsModel {

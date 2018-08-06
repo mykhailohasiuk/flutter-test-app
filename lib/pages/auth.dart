@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 import '../scoped_models/main.dart';
-
-enum AuthMode { SignUp, Login }
+import '../models/auth.dart';
 
 class AuthPage extends StatefulWidget {
   State<StatefulWidget> createState() {
@@ -79,12 +78,16 @@ class _AuthPageState extends State<AuthPage> {
                     ScopedModelDescendant<MainModel>(
                       builder: (BuildContext context, Widget child,
                           MainModel model) {
-                        return RaisedButton(
-                            color: Theme.of(context).accentColor,
-                            textColor: Colors.white,
-                            child: Text('LOGIN'),
-                            onPressed: () =>
-                                _submitAuth(model.login, model.signup));
+                        return model.isLoading
+                            ? CircularProgressIndicator()
+                            : RaisedButton(
+                                color: Theme.of(context).accentColor,
+                                textColor: Colors.white,
+                                child: Text(_authMode == AuthMode.Login
+                                    ? 'LOGIN'
+                                    : 'SIGN IN'),
+                                onPressed: () =>
+                                    _submitAuth(model.authenticate));
                       },
                     ),
                   ],
@@ -183,18 +186,34 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  void _submitAuth(Function login, Function signup) async {
+  void _submitAuth(Function authenticate) async {
     if (_loginKey.currentState.validate()) {
       if (_loginData['isTermsAccepted']) {
         _loginKey.currentState.save();
-        if (_authMode == AuthMode.Login) {
-          login(_loginData['email'], _loginData['password']);
+
+        Map<String, dynamic> successInfo;
+
+        successInfo = await authenticate(
+            _loginData['email'], _loginData['password'], _authMode);
+        if (successInfo['success']) {
+          Navigator.pushReplacementNamed(context, '/products');
         } else {
-          final Map<String, dynamic> successInfo =
-              await signup(_loginData['email'], _loginData['password']);
-          if (successInfo['success']) {
-            Navigator.pushReplacementNamed(context, '/products');
-          } else {}
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('An Error Occured'),
+                  content: Text(successInfo['message']),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text('Okey('),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
+                );
+              });
         }
       } else
         _showWarningDialog(context);
