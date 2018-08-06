@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/product.dart';
 import '../models/user.dart';
@@ -72,7 +73,8 @@ class ProductsModel extends ConnectedProductsModel {
     };
     try {
       final http.Response response = await http.post(
-          'https://flutter-tut-app.firebaseio.com/products.json',
+          'https://flutter-tut-app.firebaseio.com/products.json?auth=${_authenticatedUser
+              .token}',
           body: json.encode(productData));
       if (response.statusCode != 200 && response.statusCode != 201) {
         _isLoading = false;
@@ -104,7 +106,9 @@ class ProductsModel extends ConnectedProductsModel {
     _isLoading = true;
     notifyListeners();
     return http
-        .get('https://flutter-tut-app.firebaseio.com/products.json')
+        .get(
+            'https://flutter-tut-app.firebaseio.com/products.json?auth=${_authenticatedUser
+            .token}')
         .then<Null>((http.Response response) {
       final List<Product> fetchedProductList = [];
 
@@ -141,7 +145,8 @@ class ProductsModel extends ConnectedProductsModel {
     _selProductId = null;
     return http
         .delete(
-            'https://flutter-tut-app.firebaseio.com/products/$deletedProductId.json')
+            'https://flutter-tut-app.firebaseio.com/products/$deletedProductId.json?auth=${_authenticatedUser
+            .token}')
         .then((http.Response response) {
       _isLoading = false;
       notifyListeners();
@@ -170,7 +175,7 @@ class ProductsModel extends ConnectedProductsModel {
     return http
         .put(
             'https://flutter-tut-app.firebaseio.com/products/${selectedProduct
-            .id}.json',
+            .id}.json?auth=${_authenticatedUser.token}',
             body: json.encode(updatedData))
         .then((http.Response response) {
       _products[selProductIndex] = Product(
@@ -226,10 +231,16 @@ class ProductsModel extends ConnectedProductsModel {
 
 class UserModel extends ConnectedProductsModel {
 
+  //GETTERS
+  User get user {
+    return _authenticatedUser;
+  }
+
+
   //AUTHENTICATION:
 
-  Future<Map<String, dynamic>> authenticate(String email, String password, [AuthMode mode = AuthMode.Login]) async {
-
+  Future<Map<String, dynamic>> authenticate(String email, String password,
+      [AuthMode mode = AuthMode.Login]) async {
     _isLoading = true;
     notifyListeners();
     final Map<String, dynamic> loginData = {
@@ -238,10 +249,9 @@ class UserModel extends ConnectedProductsModel {
       'returnSecureToken': true
     };
 
-
     http.Response authResponse;
 
-    if (mode == AuthMode.Login){
+    if (mode == AuthMode.Login) {
       authResponse = await http.post(
           'https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyAYL-pEjPTcaxOCZqBXTbGx82fqb4pot0Q',
           body: json.encode(loginData),
@@ -260,6 +270,17 @@ class UserModel extends ConnectedProductsModel {
 
     if (responseData.containsKey('idToken')) {
       hasError = false;
+      _authenticatedUser = User(
+          id: responseData['localId'],
+          email: responseData['email'],
+          token: responseData['idToken']);
+
+      //this will save a token for a user on a device
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('token', responseData['idToken']);
+      prefs.setString('userEmail', responseData['eamil']);
+      prefs.setString('userId', responseData['localId']);
+
       message = 'Authentication succeded';
     } else if (responseData['error']['message'] == 'EMAIL_EXISTS') {
       message = 'This email already exists';
@@ -271,10 +292,24 @@ class UserModel extends ConnectedProductsModel {
     _isLoading = false;
     notifyListeners();
     return {'success': !hasError, 'message': message};
-
   }
 
+  void autoAuthenticate() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String token = prefs.getString('token');
+    if (token != null) {
+      final String userEmail = prefs.getString('email');
+      final String userId = prefs.getString('localId');
+      _authenticatedUser = User(
+        id: userId,
+        email: userEmail,
+        token: token
+      );
 
+      notifyListeners();
+
+    }
+  }
 }
 
 class UtilityModel extends ConnectedProductsModel {
